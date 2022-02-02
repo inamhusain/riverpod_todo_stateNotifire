@@ -21,7 +21,7 @@ class StateProviderHalper extends StateNotifier<List<Todo>> {
     state = state.where((_todo) => _todo.id != todo.id).toList();
   }
 
-  editTodo(Todo todo, {title, subTitle, index}) {
+  editTodo({title, subTitle, index}) {
     state[index].title = title;
     state[index].subTitle = subTitle;
   }

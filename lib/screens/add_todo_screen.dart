@@ -235,7 +235,6 @@ class AddTodoScreen extends ConsumerWidget {
                         height: height,
                         onPressed: () {
                           ref.read(_todoProvider.notifier).editTodo(
-                              todos[index],
                               index: index,
                               title: _editTitleController.text,
                               subTitle: _editSubTitleController.text);
