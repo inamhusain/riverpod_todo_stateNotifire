@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, unnecessary_brace_in_string_interps, prefer_final_fields, unused_field, must_be_immutable, use_key_in_widget_constructors, unnecessary_string_interpolations
+// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, unnecessary_brace_in_string_interps, prefer_final_fields, unused_field, must_be_immutable, use_key_in_widget_constructors, unnecessary_string_interpolations, unnecessary_null_comparison
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,6 +43,7 @@ class AddTodoScreen extends ConsumerWidget {
           child: SingleChildScrollView(
             child: Column(
               children: [
+                SizedBox(height: height * 0.03),
                 commonTextField(
                     width: width,
                     context: context,
@@ -58,9 +59,15 @@ class AddTodoScreen extends ConsumerWidget {
                 commonButton(
                     height: height,
                     onPressed: () {
-                      ref.read(_todoProvider.notifier).addTodo(
-                          title: _titleController.text,
-                          subTitle: _subTitleController.text);
+                      if (_titleController.text.isNotEmpty ||
+                          _subTitleController.text.isNotEmpty) {
+                        ref.read(_todoProvider.notifier).addTodo(
+                            title: _titleController.text,
+                            subTitle: _subTitleController.text);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Please enter value')));
+                      }
 
                       _titleController.clear();
                       _subTitleController.clear();
@@ -77,7 +84,7 @@ class AddTodoScreen extends ConsumerWidget {
                   height: height * 0.05,
                 ),
                 Text(
-                  'Last Added Todo',
+                  'Todo List',
                   style: TextStyle(
                       color: AppColors.white,
                       fontSize: Utils.fontsize(
@@ -97,53 +104,58 @@ class AddTodoScreen extends ConsumerWidget {
   }
 
   todosListView({height, context, width}) {
-    return Consumer(
-      builder: (context, ref, child) {
-        var todos = ref.watch(_todoProvider);
-        return SizedBox(
-            height: height * 0.45,
-            child: todos.isNotEmpty
-                ? ListView.builder(
-                    physics: BouncingScrollPhysics(),
-                    itemCount: todos.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return GestureDetector(
-                        onTap: () {
-                          dialogBox(
-                              context: context,
-                              height: height,
-                              width: width,
-                              index: index);
-                        },
-                        child: Card(
-                          color: AppColors.grey700,
-                          child: ListTile(
-                            title: Text(
-                              "${todos[index].title.toString()}",
-                              style: TextStyle(
-                                  color: AppColors.white,
-                                  fontSize: Utils.fontsize(
-                                      context: context, fontsize: 6)),
-                            ),
-                            subtitle: Text(todos[index].subTitle.toString()),
-                            trailing: IconButton(
-                              icon: Icon(
-                                Icons.delete,
-                                color: AppColors.black,
-                              ),
-                              onPressed: () {
-                                ref
-                                    .read(_todoProvider.notifier)
-                                    .deleteTodo(todos[index]);
-                              },
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  )
-                : Text('No Data Found'));
-      },
+    return SizedBox(
+      height: height * 0.45,
+      child: Consumer(
+        builder: (context, ref, child) {
+          final _todoData = ref.watch(_todoProvider);
+          if (_todoData.isEmpty) {
+            return Text(
+              "No Data Found",
+              style: TextStyle(color: Colors.white),
+            );
+          }
+          return ListView.builder(
+            physics: BouncingScrollPhysics(),
+            itemCount: _todoData.length,
+            itemBuilder: (BuildContext context, int index) {
+              return GestureDetector(
+                onTap: () {
+                  dialogBox(
+                      context: context,
+                      height: height,
+                      width: width,
+                      index: index);
+                },
+                child: Card(
+                  color: AppColors.grey700,
+                  child: ListTile(
+                    title: Text(
+                      "${_todoData[index].title.toString()}",
+                      style: TextStyle(
+                          color: AppColors.white,
+                          fontSize:
+                              Utils.fontsize(context: context, fontsize: 6)),
+                    ),
+                    subtitle: Text(_todoData[index].subTitle.toString()),
+                    trailing: IconButton(
+                      icon: Icon(
+                        Icons.delete,
+                        color: AppColors.black,
+                      ),
+                      onPressed: () {
+                        ref
+                            .read(_todoProvider.notifier)
+                            .deleteTodo(_todoData[index]);
+                      },
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -234,13 +246,19 @@ class AddTodoScreen extends ConsumerWidget {
                     commonButton(
                         height: height,
                         onPressed: () {
-                          ref.read(_todoProvider.notifier).editTodo(
-                              index: index,
-                              title: _editTitleController.text,
-                              subTitle: _editSubTitleController.text);
-                          _titleController.clear();
-                          _subTitleController.clear();
-                          Navigator.pop(context);
+                          if (_editTitleController.text.isNotEmpty &&
+                              _editSubTitleController.text.isNotEmpty) {
+                            ref.read(_todoProvider.notifier).editTodo(
+                                index: index,
+                                title: _editTitleController.text,
+                                subTitle: _editSubTitleController.text);
+                            _titleController.clear();
+                            _subTitleController.clear();
+                            Navigator.pop(context);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Please enter value')));
+                          }
                         },
                         width: width,
                         context: context,
