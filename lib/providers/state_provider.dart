@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_todo/models/todo.dart';
 
@@ -17,7 +18,11 @@ class StateProviderHalper extends StateNotifier<List<Todo>> {
   }
 
   deleteTodo(Todo todo) {
-    // state = state;
     state = state.where((_todo) => _todo.id != todo.id).toList();
+  }
+
+  editTodo(Todo todo, {title, subTitle, index}) {
+    state[index].title = title;
+    state[index].subTitle = subTitle;
   }
 }

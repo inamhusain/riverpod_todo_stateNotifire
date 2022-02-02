@@ -15,6 +15,8 @@ final _todoProvider =
 class AddTodoScreen extends ConsumerWidget {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _subTitleController = TextEditingController();
+  final TextEditingController _editTitleController = TextEditingController();
+  final TextEditingController _editSubTitleController = TextEditingController();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -53,26 +55,21 @@ class AddTodoScreen extends ConsumerWidget {
                     lableText: 'Sub Title',
                     controller: _subTitleController),
                 SizedBox(height: height * 0.03),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    commonButton(
-                        height: height,
-                        onPressed: () {
-                          ref.read(_todoProvider.notifier).addTodo(
-                              title: _titleController.text,
-                              subTitle: _subTitleController.text);
+                commonButton(
+                    height: height,
+                    onPressed: () {
+                      ref.read(_todoProvider.notifier).addTodo(
+                          title: _titleController.text,
+                          subTitle: _subTitleController.text);
 
-                          _titleController.clear();
-                          _subTitleController.clear();
-                        },
-                        width: width,
-                        context: context,
-                        text: 'submit'),
-                    SizedBox(
-                      width: width * 0.03,
-                    ),
-                  ],
+                      _titleController.clear();
+                      _subTitleController.clear();
+                    },
+                    width: width,
+                    context: context,
+                    text: 'submit'),
+                SizedBox(
+                  width: width * 0.03,
                 ),
                 Divider(
                   color: AppColors.deepPurple,
@@ -90,10 +87,7 @@ class AddTodoScreen extends ConsumerWidget {
                       letterSpacing: width * 0.02),
                 ),
                 SizedBox(height: height * 0.03),
-                todosListView(
-                  height: height,
-                  context: context,
-                ),
+                todosListView(height: height, context: context, width: width),
               ],
             ),
           ),
@@ -102,7 +96,7 @@ class AddTodoScreen extends ConsumerWidget {
     );
   }
 
-  todosListView({height, context}) {
+  todosListView({height, context, width}) {
     return Consumer(
       builder: (context, ref, child) {
         var todos = ref.watch(_todoProvider);
@@ -113,27 +107,36 @@ class AddTodoScreen extends ConsumerWidget {
                     physics: BouncingScrollPhysics(),
                     itemCount: todos.length,
                     itemBuilder: (BuildContext context, int index) {
-                      return Card(
-                        color: AppColors.grey700,
-                        child: ListTile(
-                          title: Text(
-                            "${todos[index].title.toString()}",
-                            style: TextStyle(
-                                color: AppColors.white,
-                                fontSize: Utils.fontsize(
-                                    context: context, fontsize: 6)),
-                          ),
-                          subtitle: Text(todos[index].subTitle.toString()),
-                          trailing: IconButton(
-                            icon: Icon(
-                              Icons.delete,
-                              color: AppColors.black,
+                      return GestureDetector(
+                        onTap: () {
+                          dialogBox(
+                              context: context,
+                              height: height,
+                              width: width,
+                              index: index);
+                        },
+                        child: Card(
+                          color: AppColors.grey700,
+                          child: ListTile(
+                            title: Text(
+                              "${todos[index].title.toString()}",
+                              style: TextStyle(
+                                  color: AppColors.white,
+                                  fontSize: Utils.fontsize(
+                                      context: context, fontsize: 6)),
                             ),
-                            onPressed: () {
-                              ref
-                                  .read(_todoProvider.notifier)
-                                  .deleteTodo(todos[index]);
-                            },
+                            subtitle: Text(todos[index].subTitle.toString()),
+                            trailing: IconButton(
+                              icon: Icon(
+                                Icons.delete,
+                                color: AppColors.black,
+                              ),
+                              onPressed: () {
+                                ref
+                                    .read(_todoProvider.notifier)
+                                    .deleteTodo(todos[index]);
+                              },
+                            ),
                           ),
                         ),
                       );
@@ -198,6 +201,58 @@ class AddTodoScreen extends ConsumerWidget {
               )),
         ),
       ),
+    );
+  }
+
+  dialogBox({context, height, width, index}) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppColors.grey900,
+          content: SizedBox(
+            height: height * 0.3,
+            child: Consumer(
+              builder: (context, ref, child) {
+                List<Todo> todos = ref.watch(_todoProvider);
+                _editTitleController.text = todos[index].title;
+                _editSubTitleController.text = todos[index].subTitle;
+                return Column(
+                  children: [
+                    commonTextField(
+                        width: width,
+                        context: context,
+                        lableText: 'Title',
+                        controller: _editTitleController),
+                    SizedBox(height: height * 0.03),
+                    commonTextField(
+                        width: width,
+                        context: context,
+                        lableText: 'Sub Title',
+                        controller: _editSubTitleController),
+                    SizedBox(height: height * 0.03),
+                    commonButton(
+                        height: height,
+                        onPressed: () {
+                          ref.read(_todoProvider.notifier).editTodo(
+                              todos[index],
+                              index: index,
+                              title: _editTitleController.text,
+                              subTitle: _editSubTitleController.text);
+                          _titleController.clear();
+                          _subTitleController.clear();
+                          Navigator.pop(context);
+                        },
+                        width: width,
+                        context: context,
+                        text: 'update')
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 }
